@@ -54,7 +54,7 @@ async function addCircleFeature(coordinates, description) {
     new Style({
       image: new CircleStyle({
         radius: 10,
-        fill: new Fill({ color: 'rgba(0, 128, 255, 0.5)' }),
+        fill: new Fill({ color: 'rgba(245, 40, 145, 0.8)' }),
         stroke: new Stroke({ color: 'blue', width: 2 }),
       }),
     })
@@ -65,7 +65,11 @@ async function addCircleFeature(coordinates, description) {
   try {
     await addDoc(collection(db, "waypoints"), {
       description: description,
-      coordinates: toLonLat(coordinates),
+      coordinates: {
+        latitude: toLonLat(coordinates)[1],  // Extract latitude
+        longitude: toLonLat(coordinates)[0], // Extract longitude
+      },
+      timestamp: new Date(), // Save current timestamp
     });
     console.log("Waypoint added to Firebase:", description);
   } catch (e) {
@@ -135,17 +139,33 @@ window.fillInput = function () {
   const lon = document.getElementById("lon");
   const lat = document.getElementById("lat");
 
-  if (selectedCity === "BatonRouge") {
+  if (selectedCity == "Atyrau") {
+    lon.value = 51.9238;
+    lat.value = 47.0945;
+  }
+  else if (selectedCity == "BatonRouge") {
     lon.value = -91.1871;
     lat.value = 30.4515;
-  } else if (selectedCity === "London") {
+  }
+  else if (selectedCity == "Berlin") {
+    lon.value = 13.405;
+    lat.value = 52.52;
+  }
+  else if (selectedCity == "Lagos") {
+    lon.value = 3.3792;
+    lat.value = 6.5244;
+  }
+  else if (selectedCity == "London") {
     lon.value = -0.1276;
     lat.value = 51.5072;
-  } else if (selectedCity === "Yokohama") {
+  }
+  else if (selectedCity == "Yokohama") {
     lon.value = 139.6380;
     lat.value = 35.4437;
-  } else if (selectedCity === "Venice") {
+  }
+  else if (selectedCity == "Venice") {
     lon.value = 12.316;
-    lat.value = 45.4404;
+    lat.value = 45.4404
   }
 };
+
