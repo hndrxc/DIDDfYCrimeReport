@@ -36,7 +36,23 @@
       <input id="lat" type="number" placeholder=""/>
       
     </div> -->
-
+    <div id="waypoint-form" class="waypoint-form">
+      <h3>Add Waypoint</h3>
+      <label for="category">Category:</label>
+      <select id="category">
+        <option value="Theft">Theft</option>
+        <option value="Vandalism">Vandalism</option>
+        <option value="Assault">Assault</option>
+        <option value="Accident/HitandRun"></option>
+        <option value="Transaction Scammed"></option>
+        <option value="Other">Other</option>
+      </select>
+      
+      <label for="description">Description:</label>
+      <textarea id="description" rows="3" placeholder="Enter details..."></textarea>
+      
+      <button onclick="saveWaypoint()">Save Waypoint</button>
+    </div>
     <div id="js-map" class="map"></div>
     <div id="mouse-position"></div>
     <canvas id="myCanvas" width="400" height="400"></canvas>

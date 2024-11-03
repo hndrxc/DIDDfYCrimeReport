@@ -49,12 +49,14 @@ async function addCircleFeature(coordinates, description) {
   const circleFeature = new Feature({
     geometry: new Point(coordinates),
   });
-
+  const color = category === 'Theft' ? 'red' :
+                category === 'Vandalism' ? 'orange' :
+                category === 'Assault' ? 'purple' : 'blue';
   circleFeature.setStyle(
     new Style({
       image: new CircleStyle({
         radius: 10,
-        fill: new Fill({ color: 'rgba(245, 40, 145, 0.8)' }),
+        fill: new Fill({ color: color }),
         stroke: new Stroke({ color: 'blue', width: 2 }),
       }),
     })
@@ -81,11 +83,9 @@ async function addCircleFeature(coordinates, description) {
 map.on('dblclick', async function (event) {
   event.preventDefault();
   const coordinates = event.coordinate;
-  
-  const description = prompt("Enter a description for this waypoint:");
-  if (description) {
-    addCircleFeature(coordinates, description);
-  }
+  document.getElementById('waypoint-form').style.display = 'block';
+
+  window.currentCoordinates = coordinates
 });
 
 // Load waypoints from Firebase on map load
@@ -115,18 +115,44 @@ async function loadWaypoints() {
   });
 }
 loadWaypoints(); // Load existing waypoints on map load
+async function saveWaypoint() {
+  const description = document.getElementById('description').value;
+  const category = document.getElementById('category').value;
+  const coordinates = window.currentCoordinates;
 
+  if (!description || !category || !coordinates) {
+    alert("Please enter all information.");
+    return;
+  }
+
+  // Create and save the waypoint
+  try {
+    await addDoc(collection(db, "waypoints"), {
+      description: description,
+      category: category,
+      coordinates: {
+        latitude: toLonLat(coordinates)[1],
+        longitude: toLonLat(coordinates)[0],
+      },
+      timestamp: new Date(),
+    });
+    console.log("Waypoint added to Firebase:", category, description);
+
+    // Add the waypoint to the map visually
+    addCircleFeature(coordinates, description, category);
+    document.getElementById('waypoint-form').style.display = 'none';
+    document.getElementById('description').value = ''; // Clear form fields
+  } catch (e) {
+    console.error("Error adding waypoint to Firebase:", e);
+  }
+}
 // Center map and canvas functionality
 window.handleClick = function () {
   const lon = parseFloat(document.getElementById("lon").value);
   const lat = parseFloat(document.getElementById("lat").value);
 
   if (!isNaN(lon) && !isNaN(lat)) {
-    const coordinates = fromLonLat([lon, lat]);
-    view.animate({
-      center: coordinates,
-      duration: 1000,
-    });
+    view.animate({zoom: 2}, {center: fromLonLat([lon, lat])}, {zoom: 12});
   } else {
     console.log("Invalid coordinates");
   }

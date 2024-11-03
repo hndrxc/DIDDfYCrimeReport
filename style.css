@@ -61,10 +61,37 @@ input[type="button"]:hover {
   height: 78vh;
   border-top: 1px solid #ccc;
 }
-
-
-
 #js-map {
   margin-top: 1em;
+}
+.waypoint-form {
+  position: absolute;
+  top: 10%;
+  left: 10%;
+  background-color: #fff;
+  padding: 1em;
+  border-radius: 8px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+  display: none; /* Hidden by default */
+  width: 250px;
+}
+
+.waypoint-form h3 {
+  margin-top: 0;
+}
+
+.waypoint-form label {
+  display: block;
+  margin: 0.5em 0 0.2em;
+}
+
+.waypoint-form textarea,
+.waypoint-form select {
+  width: 100%;
+  padding: 0.5em;
+  margin-bottom: 0.5em;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }
 
