@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Geaux Travel</title>
+    <link rel="stylesheet" href="node_modules/ol/ol.css">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&display=swap" rel="stylesheet">
+    
+  </head>
+  <body>
+    <header>
+      <h1>Geaux Travel!</h1>
+      <!--<p>Hawk tuah and spit on that thing</p>-->
+    </header>
+
+    <div class="controls">
+      <input id="lon" type="number" placeholder="Longitude"/>
+      <input id="lat" type="number" placeholder="Latitude"/>
+      <!--<button id="submit-button">Submit</button>
+    -->
+      <input id = "submit-button" type="button" value="Go!" onclick="handleClick();"/>
+      <select id="cities" onchange="fillInput();">
+        <option value="BatonRouge">Baton Rouge</option>
+        <option value="London">London</option>
+        <option value="Venice">Venice</option>        
+        <option value="Yokohama">Yokohama</option>
+      </select>
+    </div>
+    <!-- <div class = "report-form">
+      <input id="lon" type="number" placeholder="Crime Description"/>
+      <input id="lat" type="number" placeholder=""/>
+      
+    </div> -->
+
+    <div id="js-map" class="map"></div>
+    <div id="mouse-position"></div>
+    <canvas id="myCanvas" width="400" height="400"></canvas>
+    <script type="module" src="main.js"></script>
+  </body>
+</html>
