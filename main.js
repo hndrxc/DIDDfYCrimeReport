@@ -10,7 +10,8 @@ import { Feature } from 'ol';
 import Point from 'ol/geom/Point.js';
 import { MousePosition } from 'ol/control';
 import { createStringXY } from 'ol/coordinate';
-import { db, collection, addDoc, getDocs } from './firebaseConfig.js'; // Import Firebase Firestore
+import Overlay from 'ol/Overlay.js';
+import { db, collection, getDocs, getDoc, setDoc,doc } from './firebaseConfig.js'; // Import Firebase Firestore
 
 // Initial view and map setup
 const view = new View({
@@ -44,41 +45,35 @@ const vectorSource = new VectorSource();
 const vectorLayer = new VectorLayer({ source: vectorSource });
 map.addLayer(vectorLayer);
 
+function generateWaypointID(latitude, longitude) {
+  return `${latitude.toFixed(5)}_${longitude.toFixed(5)}`;
+}
+
 // Function to create and add a circle feature on the map and save to Firebase
-async function addCircleFeature(coordinates, description) {
+async function addCircleFeature(coordinates, description, category) {
   const circleFeature = new Feature({
     geometry: new Point(coordinates),
+    description: description,
   });
   const color = category === 'Theft' ? 'red' :
                 category === 'Vandalism' ? 'orange' :
-                category === 'Assault' ? 'purple' : 'blue';
+                category === 'Assault' ? 'purple' :
+                category === 'Accident/HitandRun' ? 'darkblue' :
+                category === 'Transaction Scammed' ? 'green' :
+                'black';
   circleFeature.setStyle(
     new Style({
       image: new CircleStyle({
         radius: 10,
         fill: new Fill({ color: color }),
-        stroke: new Stroke({ color: 'blue', width: 2 }),
+        stroke: new Stroke({ color: 'black', width: 2 }),
       }),
     })
   );
 
   vectorSource.addFeature(circleFeature);
 
-  try {
-    await addDoc(collection(db, "waypoints"), {
-      description: description,
-      coordinates: {
-        latitude: toLonLat(coordinates)[1],  // Extract latitude
-        longitude: toLonLat(coordinates)[0], // Extract longitude
-      },
-      timestamp: new Date(), // Save current timestamp
-    });
-    console.log("Waypoint added to Firebase:", description);
-  } catch (e) {
-    console.error("Error adding waypoint to Firebase:", e);
-  }
 }
-
 // Double-click event to create a waypoint
 map.on('dblclick', async function (event) {
   event.preventDefault();
@@ -93,29 +88,18 @@ async function loadWaypoints() {
   const querySnapshot = await getDocs(collection(db, "waypoints"));
   querySnapshot.forEach((doc) => {
     const data = doc.data();
-    const coordinates = fromLonLat(data.coordinates);
+    const coordinates = fromLonLat([data.coordinates.longitude, data.coordinates.latitude]);
     const description = data.description;
+    const category = data.category; 
 
-    const circleFeature = new Feature({
-      geometry: new Point(coordinates),
-    });
-
-    circleFeature.setStyle(
-      new Style({
-        image: new CircleStyle({
-          radius: 10,
-          fill: new Fill({ color: 'rgba(0, 128, 255, 0.5)' }),
-          stroke: new Stroke({ color: 'blue', width: 2 }),
-        }),
-      })
-    );
-
-    vectorSource.addFeature(circleFeature);
+    addCircleFeature(coordinates, description, category);
     console.log(`Loaded waypoint: ${description}`);
   });
 }
 loadWaypoints(); // Load existing waypoints on map load
-async function saveWaypoint() {
+
+// SavesWaypoint Function
+window.saveWaypoint = async function () {
   const description = document.getElementById('description').value;
   const category = document.getElementById('category').value;
   const coordinates = window.currentCoordinates;
@@ -124,24 +108,33 @@ async function saveWaypoint() {
     alert("Please enter all information.");
     return;
   }
-
+  const latitude = toLonLat(coordinates)[1];
+  const longitude = toLonLat(coordinates)[0];
+  const waypointID = generateWaypointID(latitude, longitude);
   // Create and save the waypoint
   try {
-    await addDoc(collection(db, "waypoints"), {
-      description: description,
-      category: category,
-      coordinates: {
-        latitude: toLonLat(coordinates)[1],
-        longitude: toLonLat(coordinates)[0],
-      },
-      timestamp: new Date(),
-    });
-    console.log("Waypoint added to Firebase:", category, description);
+    // Check if waypoint with the same ID already exists
+    const waypointRef = doc(db, "waypoints", waypointID);
+    const waypointSnap = await getDoc(waypointRef);
 
-    // Add the waypoint to the map visually
-    addCircleFeature(coordinates, description, category);
+    if (waypointSnap.exists()){
+      console.log("Waypoint already exists in Firebase:", description);
+    }else{
+      // Save waypoint to Firebase
+      await setDoc(waypointRef, {
+        description: description,
+        category: category,
+        coordinates: { latitude, longitude },
+        timestamp: new Date(),
+      });
+      console.log("Waypoint added to Firebase:", description);
+
+      // Add waypoint to the map visually
+      addCircleFeature(coordinates, description, category);
+    }
     document.getElementById('waypoint-form').style.display = 'none';
-    document.getElementById('description').value = ''; // Clear form fields
+    document.getElementById('description').value = '';
+    document.getElementById('category').value = 'Theft';
   } catch (e) {
     console.error("Error adding waypoint to Firebase:", e);
   }
@@ -152,12 +145,35 @@ window.handleClick = function () {
   const lat = parseFloat(document.getElementById("lat").value);
 
   if (!isNaN(lon) && !isNaN(lat)) {
-    view.animate({zoom: 2}, {center: fromLonLat([lon, lat])}, {zoom: 12});
+    view.animate(
+      { center: fromLonLat([lon, lat]), duration: 1000 },
+      { zoom: 12, duration: 500 }
+    );
   } else {
     console.log("Invalid coordinates");
   }
 };
+const popup = new Overlay({
+  element: document.getElementById('popup'),
+  positioning: 'bottom-center',
+  stopEvent: false,
+});
+map.addOverlay(popup);
 
+// Display description on waypoint click
+map.on('click', function (event) {
+  // Hide popup initially
+  popup.setPosition(undefined);
+
+  map.forEachFeatureAtPixel(event.pixel, function (feature) {
+    const description = feature.get('description'); // Get the description property
+    if (description) {
+      const coordinates = feature.getGeometry().getCoordinates();
+      popup.setPosition(coordinates);
+      document.getElementById('popup-content').innerHTML = description; // Set popup content
+    }
+  });
+});
 // Populate coordinates based on dropdown selection
 window.fillInput = function () {
   const dropdown = document.getElementById("cities");

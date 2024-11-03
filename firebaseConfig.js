@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc, getDocs } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, setDoc, getDoc, doc } from 'firebase/firestore';
 
 const firebaseApp = initializeApp({
     apiKey: "AIzaSyDXwcTsjy2sadptfCietLl5NokZswMyGuc",
@@ -14,5 +14,5 @@ const firebaseApp = initializeApp({
 
 const db = getFirestore(firebaseApp);
 
-// Exporting Firestore utility functions to handle waypoints
-export { db, collection, addDoc, getDocs };
+// Export Firestore utility functions needed for waypoints
+export { db, collection, getDocs, setDoc, getDoc, doc };
